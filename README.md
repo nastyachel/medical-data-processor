@@ -38,6 +38,11 @@
      ```
      Any of them are relevant for selection.
 
+
+5.  I have added a possibility to configure interval spans provided to the MeasurementSampler API.
+    The interval value must evenly divide 60 minutes (valid values: 5, 10, 12, 15, 20, 30).
+
+
 ## Examples
 
 
@@ -73,7 +78,7 @@
     {2017-01-03T10:02:01, TEMP, 35.82}
     {2017-01-03T10:05:00, SPO2, 97.17}
     {2017-01-03T10:05:01, SPO2, 95.08}
-    Output (lass values due to filtering out by start date)
+    Output (less values due to filtering out by start date)
     {2017-01-03T10:05:00, SPO2, 97.17}
     {2017-01-03T10:10:00, SPO2, 95.08}
     {2017-01-03T10:10:00, TEMP, 35.01}

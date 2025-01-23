@@ -6,9 +6,16 @@ import java.time.LocalDateTime
  * Samples measurements into fixed intervals.
  * Each interval uses the last measurement within that timeframe.
  *
- * @property intervalMinutes Sampling interval in minutes, defaults to 5
+ * @property intervalMinutes Sampling interval in minutes, defaults to 5. Must evenly divide 60 minutes to intervals.
  */
 class MeasurementSampler(private val intervalMinutes: Int = 5) {
+    init {
+        require(60 % intervalMinutes == 0) {
+            "Interval must evenly divide 60 minutes. " +
+                    "Valid values: 1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60"
+        }
+    }
+
     /**
      * Samples measurements by grouping them into fixed time intervals.
      * Selects the last measurement in each interval as the representative value.
@@ -42,7 +49,8 @@ class MeasurementSampler(private val intervalMinutes: Int = 5) {
 
         sortedMeasurements.forEach { measurement ->
             if (measurement.measurementTime <= currentInterval) {
-                lastMeasurement = measurement // measurement belongs to the current interval, not added to the result yet
+                lastMeasurement =
+                    measurement // measurement belongs to the current interval, not added to the result yet
             } else {
                 // measurement belongs to the next interval (time > current interval)
                 // it means that previous measurement was the last one for previous interval,
@@ -52,12 +60,14 @@ class MeasurementSampler(private val intervalMinutes: Int = 5) {
                 currentInterval = getNextIntervalTime(measurement.measurementTime)
             }
         }
+        // the last element was skipped, so it should be added at the end
         result.add(createIntervalMeasurement(currentInterval, lastMeasurement))
         return result
     }
 
     private fun getNextIntervalTime(measurementTime: LocalDateTime): LocalDateTime {
-        val intervalLowerBound = measurementTime.minute / intervalMinutes * intervalMinutes // rounding to the lower bound of interval
+        val intervalLowerBound =
+            measurementTime.minute / intervalMinutes * intervalMinutes // rounding to the lower bound of interval
         val intervalUpperBound = intervalLowerBound + intervalMinutes
         return when {
             isExactlyOnInterval(measurementTime, intervalLowerBound) -> measurementTime
@@ -67,7 +77,7 @@ class MeasurementSampler(private val intervalMinutes: Int = 5) {
     }
 
     private fun isExactlyOnInterval(time: LocalDateTime, interval: Int) =
-        time.minute == interval && time.second == 0 && time.nano == 0
+        time.minute == interval && time.second == 0
 
     private fun isLastIntervalOfHour(interval: Int) =
         interval + intervalMinutes == 60
@@ -76,7 +86,7 @@ class MeasurementSampler(private val intervalMinutes: Int = 5) {
         withMinute(0).startOfMinute()
 
     private fun LocalDateTime.startOfMinute() =
-        withSecond(0).withNano(0)
+        withSecond(0)
 
     private fun createIntervalMeasurement(interval: LocalDateTime, measurement: Measurement) =
         measurement.copy(measurementTime = interval)

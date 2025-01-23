@@ -3,11 +3,12 @@ import sampler.MeasurementSampler
 import sampler.MeasurementType
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.assertThrows
 import java.time.LocalDateTime
 
 class MeasurementSamplerTest {
     private val sampler = MeasurementSampler()
-    private val defaultStartTime = LocalDateTime.parse("2017-01-03T10:00:00")
+    private val defaultStartTime = LocalDateTime.parse("2000-01-03T10:00:00")
 
     private fun measurement(time: String, value: Double, type: MeasurementType = MeasurementType.TEMP) =
         Measurement(LocalDateTime.parse(time), value, type)
@@ -172,19 +173,30 @@ class MeasurementSamplerTest {
     }
 
     @Test
-    fun `test on 30 minute interval`() {
-        val newSampler = MeasurementSampler(30)
+    fun `test on 1 minute interval (valid value)`() {
+        val newSampler = MeasurementSampler(1)
 
         val measurements = listOf(
-            measurement("2017-01-03T10:35:00", 36.0)
+            measurement("2017-01-03T10:55:01", 36.0)
         )
         val expectedTemp = listOf(
-            measurement("2017-01-03T11:00:00", 36.0)
+            measurement("2017-01-03T10:56:00", 36.0)
         )
         val startTime = LocalDateTime.parse("2017-01-02T10:00:02")
 
         val result = newSampler.sample(startTime, measurements)
         assertEquals(expectedTemp, result[MeasurementType.TEMP])
+    }
+
+    @Test
+    fun `test on incorrect interval values provided to constructor`() {
+        val exception = assertThrows<IllegalArgumentException> {
+            MeasurementSampler(14)
+        }
+        assertEquals(
+            "Interval must evenly divide 60 minutes. Valid values: 1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60",
+            exception.message
+        )
     }
 
 }
