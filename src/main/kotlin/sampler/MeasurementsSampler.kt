@@ -42,10 +42,11 @@ class MeasurementSampler(private val intervalMinutes: Int = 5) {
 
         sortedMeasurements.forEach { measurement ->
             if (measurement.measurementTime <= currentInterval) {
-                lastMeasurement = measurement // measurement belongs to the current interval
+                lastMeasurement = measurement // measurement belongs to the current interval, not added to the result yet
             } else {
                 // measurement belongs to the next interval (time > current interval)
-                // => previous measurement was the last one for previous interval => should be added to result
+                // it means that previous measurement was the last one for previous interval,
+                // previous measurement should be added to result
                 result.add(createIntervalMeasurement(currentInterval, lastMeasurement))
                 lastMeasurement = measurement
                 currentInterval = getNextIntervalTime(measurement.measurementTime)
