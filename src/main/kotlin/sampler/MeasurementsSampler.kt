@@ -7,6 +7,7 @@ import java.time.LocalDateTime
  * Each interval uses the last measurement within that timeframe.
  *
  * @property intervalMinutes Sampling interval in minutes, defaults to 5. Must evenly divide 60 minutes to intervals.
+ * @throws IllegalArgumentException if intervalMinutes does not evenly divide 60
  */
 class MeasurementSampler(private val intervalMinutes: Int = 5) {
     init {
