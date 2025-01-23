@@ -7,7 +7,7 @@
 
 1. `startOfSampling` parameter is used to filter out samples that come before this value
 
-2. Intervals are defined as a 5-minute spans and samples are projected onto this 5-minutes grid:
+2. Intervals are fixed, defined as a 5-minute spans and samples are projected onto this 5-minutes grid:
    > 10:02:01 Measurement Time<br>
    > 10:05:00 Next interval<br>
 
