@@ -129,4 +129,31 @@ class MeasurementSamplerTest {
         assertEquals(expectedTemp, result[MeasurementType.TEMP])
     }
 
+    @Test
+    fun `test on switching to next day`() {
+        val measurements = listOf(
+            measurement("2017-01-03T23:57:00", 36.0)
+        )
+        val expectedTemp = listOf(
+            measurement("2017-01-04T00:00:00", 36.0)
+        )
+        val startTime = LocalDateTime.parse("2017-01-03T10:00:02")
+
+        val result = sampler.sample(startTime, measurements)
+        assertEquals(expectedTemp, result[MeasurementType.TEMP])
+    }
+
+    @Test
+    fun `test on midnight`() {
+        val measurements = listOf(
+            measurement("2017-01-03T00:00:00", 36.0)
+        )
+        val expectedTemp = listOf(
+            measurement("2017-01-03T00:00:00", 36.0)
+        )
+        val startTime = LocalDateTime.parse("2017-01-02T10:00:02")
+
+        val result = sampler.sample(startTime, measurements)
+        assertEquals(expectedTemp, result[MeasurementType.TEMP])
+    }
 }

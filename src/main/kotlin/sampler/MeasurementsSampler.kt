@@ -56,19 +56,26 @@ class MeasurementSampler(private val intervalMinutes: Int = 5) {
     }
 
     private fun getNextIntervalTime(measurementTime: LocalDateTime): LocalDateTime {
-        val minute = measurementTime.minute
-        val currentInterval = minute / intervalMinutes * intervalMinutes
-        val nextInterval = currentInterval + intervalMinutes
-
-        return measurementTime
-            .withSecond(0)
-            .withNano(0)
-            .withMinute(
-                if (minute == currentInterval && measurementTime.second == 0 && measurementTime.nano == 0)
-                    currentInterval
-                else nextInterval
-            )
+        val intervalLowerBound = measurementTime.minute / intervalMinutes * intervalMinutes // rounding to the lower bound of interval
+        val intervalUpperBound = intervalLowerBound + intervalMinutes
+        return when {
+            isExactlyOnInterval(measurementTime, intervalLowerBound) -> measurementTime
+            isLastIntervalOfHour(intervalLowerBound) -> measurementTime.plusHours(1).startOfHour()
+            else -> measurementTime.withMinute(intervalUpperBound).startOfMinute()
+        }
     }
+
+    private fun isExactlyOnInterval(time: LocalDateTime, interval: Int) =
+        time.minute == interval && time.second == 0 && time.nano == 0
+
+    private fun isLastIntervalOfHour(interval: Int) =
+        interval + intervalMinutes == 60
+
+    private fun LocalDateTime.startOfHour() =
+        withMinute(0).startOfMinute()
+
+    private fun LocalDateTime.startOfMinute() =
+        withSecond(0).withNano(0)
 
     private fun createIntervalMeasurement(interval: LocalDateTime, measurement: Measurement) =
         measurement.copy(measurementTime = interval)
