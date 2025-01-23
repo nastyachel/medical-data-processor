@@ -1,5 +1,4 @@
 package sampler
-import java.time.Duration
 import java.time.LocalDateTime
 enum class MeasurementType {
     TEMP, SPO2, HEART_RATE
@@ -20,41 +19,46 @@ class MeasurementSampler {
         if (unsampledMeasurements.isEmpty()) return emptyMap()
 
         return unsampledMeasurements
+            .asSequence()
+            .filter { it.measurementTime >= startOfSampling }
+            .sortedBy { it.measurementTime }
             .groupBy { it.type }
-            .mapValues { (_, measurements) ->
-                sampleMeasurements(startOfSampling, measurements.sortedBy { it.measurementTime })
-            }
+            .mapValues { (_, measurements) -> sampleMeasurements(measurements) }
     }
 
     private fun sampleMeasurements(
-        startOfSampling: LocalDateTime,
         sortedMeasurements: List<Measurement>
     ): List<Measurement> {
         if (sortedMeasurements.isEmpty()) return emptyList()
 
         val result = mutableListOf<Measurement>()
-        var currentMeasurement = sortedMeasurements.first()
-        var currentInterval = getNextIntervalTime(startOfSampling, currentMeasurement.measurementTime)
+        var lastMeasurement = sortedMeasurements.first()
+        var currentInterval = getNextIntervalTime(lastMeasurement.measurementTime)
 
         sortedMeasurements.forEach { measurement ->
             if (measurement.measurementTime <= currentInterval) {
-                currentMeasurement = measurement
-            } else {
-                result.add(createIntervalMeasurement(currentInterval, currentMeasurement))
-                currentMeasurement = measurement
-                currentInterval = getNextIntervalTime(currentInterval, measurement.measurementTime)
+                lastMeasurement = measurement // measurement belongs to the current interval
+            } else { // measurement belongs to the next interval (time > current interval)
+                result.add(createIntervalMeasurement(currentInterval, lastMeasurement))
+                lastMeasurement = measurement
+                currentInterval = getNextIntervalTime(measurement.measurementTime)
             }
         }
-        result.add(createIntervalMeasurement(currentInterval, currentMeasurement))
+        result.add(createIntervalMeasurement(currentInterval, lastMeasurement))
         return result
     }
 
-    private fun getNextIntervalTime(startTime: LocalDateTime, measurementTime: LocalDateTime): LocalDateTime {
-        val durationInSeconds = Duration.between(startTime, measurementTime).seconds
-        val intervalInSeconds = 5 * 60
-        val intervalCount = (durationInSeconds + intervalInSeconds - 1) / intervalInSeconds
+    private fun getNextIntervalTime(measurementTime: LocalDateTime): LocalDateTime {
+        val minute = measurementTime.minute
+        val currentInterval = minute / 5 * 5
+        val nextInterval = currentInterval + 5
 
-        return startTime.plusSeconds(intervalCount * intervalInSeconds)
+        return measurementTime
+            .withSecond(0)
+            .withNano(0)
+            .withMinute(if (minute == currentInterval && measurementTime.second == 0 && measurementTime.nano == 0)
+                currentInterval
+            else nextInterval)
     }
 
     private fun createIntervalMeasurement(interval: LocalDateTime, measurement: Measurement) =

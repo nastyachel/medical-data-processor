@@ -20,7 +20,7 @@ class MeasurementSamplerTest {
             Measurement(LocalDateTime.parse("2017-01-03T10:05:01"), 95.08, MeasurementType.SPO2)
         )
 
-        val startTime = LocalDateTime.parse("2017-01-03T10:05:00")
+        val startTime = LocalDateTime.parse("2017-01-03T10:00:00")
         val result = sampler.sample(startTime, measurements)
 
         val expectedTemp = listOf(
@@ -107,10 +107,11 @@ class MeasurementSamplerTest {
     @Test
     fun `test on start time after first measurement`() {
         val measurements = listOf(
-            Measurement(LocalDateTime.parse("2017-01-03T10:01:00"), 36.0, MeasurementType.TEMP)
+            Measurement(LocalDateTime.parse("2017-01-03T10:01:00"), 36.1, MeasurementType.TEMP), // will be filtered out
+            Measurement(LocalDateTime.parse("2017-01-03T10:04:00"), 36.0, MeasurementType.TEMP)
         )
         val expectedTemp = listOf(
-            Measurement(LocalDateTime.parse("2017-01-03T10:02:00"), 36.0, MeasurementType.TEMP)
+            Measurement(LocalDateTime.parse("2017-01-03T10:05:00"), 36.0, MeasurementType.TEMP)
         )
         val result = sampler.sample(LocalDateTime.parse("2017-01-03T10:02:00"), measurements)
         assertEquals(expectedTemp, result[MeasurementType.TEMP])
@@ -122,7 +123,7 @@ class MeasurementSamplerTest {
             Measurement(LocalDateTime.parse("2017-01-03T10:01:00"), 36.0, MeasurementType.TEMP)
         )
         val expectedTemp = listOf(
-            Measurement(LocalDateTime.parse("2017-01-03T10:05:02"), 36.0, MeasurementType.TEMP)
+            Measurement(LocalDateTime.parse("2017-01-03T10:05:00"), 36.0, MeasurementType.TEMP)
         )
         val result = sampler.sample(LocalDateTime.parse("2017-01-03T10:00:02"), measurements)
         assertEquals(expectedTemp, result[MeasurementType.TEMP])
