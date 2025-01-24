@@ -1,8 +1,5 @@
-package org.example
+package sampler
 
-import sampler.Measurement
-import sampler.MeasurementSampler
-import sampler.MeasurementType
 import java.time.LocalDateTime
 
 
