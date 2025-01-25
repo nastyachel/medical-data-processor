@@ -40,19 +40,11 @@ class MeasurementSampler(private val intervalMinutes: Int = 5) {
     }
 
     private fun sampleMeasurements(measurements: List<Measurement>): List<Measurement> {
-        val measurementsByInterval: MutableMap<LocalDateTime, TreeSet<Measurement>> = TreeMap()
-
-        measurements.forEach { measurement ->
-            val interval = getNextIntervalTime(measurement.measurementTime)
-            if (!measurementsByInterval.containsKey(interval)) {
-                measurementsByInterval[interval] = TreeSet(compareBy { it.measurementTime })
-            }
-            measurementsByInterval[interval]?.add(measurement)
-        }
-        val result = measurementsByInterval.mapNotNull { (interval, measurementsInInterval) ->
-            createIntervalMeasurement(interval, measurementsInInterval.last())
-        }.toList()
-        return result
+        return measurements
+            .groupBy { getNextIntervalTime(it.measurementTime) } // group by interval
+            .toSortedMap() // sort by interval
+            .mapValues { (_, values) -> values.maxBy { it.measurementTime } } // select latest for each interval
+            .map { (interval, measurement) -> createIntervalMeasurement(interval, measurement) }
     }
 
     private fun getNextIntervalTime(measurementTime: LocalDateTime): LocalDateTime {
