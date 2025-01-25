@@ -1,6 +1,7 @@
 package sampler
 
 import java.time.LocalDateTime
+import java.util.*
 
 /**
  * Samples measurements into fixed intervals.
@@ -34,35 +35,23 @@ class MeasurementSampler(private val intervalMinutes: Int = 5) {
         return unsampledMeasurements
             .asSequence()
             .filter { it.measurementTime >= startOfSampling }
-            .sortedBy { it.measurementTime }
             .groupBy { it.type }
             .mapValues { (_, measurements) -> sampleMeasurements(measurements) }
     }
 
-    private fun sampleMeasurements(
-        sortedMeasurements: List<Measurement>
-    ): List<Measurement> {
-        if (sortedMeasurements.isEmpty()) return emptyList()
+    private fun sampleMeasurements(measurements: List<Measurement>): List<Measurement> {
+        val measurementsByInterval: MutableMap<LocalDateTime, TreeSet<Measurement>> = TreeMap()
 
-        val result = mutableListOf<Measurement>()
-        var lastMeasurement = sortedMeasurements.first()
-        var currentInterval = getNextIntervalTime(lastMeasurement.measurementTime)
-
-        sortedMeasurements.forEach { measurement ->
-            if (measurement.measurementTime <= currentInterval) {
-                lastMeasurement =
-                    measurement // measurement belongs to the current interval, not added to the result yet
-            } else {
-                // measurement belongs to the next interval (time > current interval)
-                // it means that previous measurement was the last one for previous interval,
-                // previous measurement should be added to result
-                result.add(createIntervalMeasurement(currentInterval, lastMeasurement))
-                lastMeasurement = measurement
-                currentInterval = getNextIntervalTime(measurement.measurementTime)
+        measurements.forEach { measurement ->
+            val interval = getNextIntervalTime(measurement.measurementTime)
+            if (!measurementsByInterval.containsKey(interval)) {
+                measurementsByInterval[interval] = TreeSet(compareBy { it.measurementTime })
             }
+            measurementsByInterval[interval]?.add(measurement)
         }
-        // the last element was skipped, so it should be added at the end
-        result.add(createIntervalMeasurement(currentInterval, lastMeasurement))
+        val result = measurementsByInterval.mapNotNull { (interval, measurementsInInterval) ->
+            createIntervalMeasurement(interval, measurementsInInterval.last())
+        }.toList()
         return result
     }
 
